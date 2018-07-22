@@ -26,7 +26,6 @@ fn main() {
     let mut rows : [[Option<i32> ; ARRAY_LENGTH] ; ARRAY_LENGTH] =
         [[None ; ARRAY_LENGTH] ; ARRAY_LENGTH];
 
-    let mut cur_num = 1;
     let mut cur_coord = (0,0);
     let mut cur_dir = Direction::Right;
 
@@ -34,10 +33,16 @@ fn main() {
     let mut num_left_in_side = 1;
     let mut side_length = 0;
 
-    while cur_num < TARGET_NUMBER {
+    loop {
         let (actual_x, actual_y) = convert_coords(cur_coord);
 
-        rows[actual_x as usize][actual_y as usize] = Some(cur_num);
+
+        let new_value = calculate_value(cur_coord, &rows);
+        if new_value > TARGET_NUMBER {
+            println!("value is: {}", new_value);
+            break;
+        }
+        rows[actual_x as usize][actual_y as usize] = Some(new_value);
 
         if num_left_in_side < 1 {
             if num_sides_left < 1 {
@@ -51,15 +56,8 @@ fn main() {
         } else {
             num_left_in_side -= 1;
         }
-        cur_num += 1;
         cur_coord = increment_coords(cur_coord, &cur_dir);
     }
-
-    println!("distance is: {}", get_distance(cur_coord));
-}
-
-fn get_distance((x,y) : (i32, i32)) -> i32 {
-    i32::abs(x) + i32::abs(y)
 }
 
 fn increment_coords((x,y) : (i32, i32), dir : &Direction) -> (i32, i32) {
@@ -81,4 +79,22 @@ fn convert_coords((x,y) : (i32, i32)) -> (i32, i32) {
     };
 
     (adjust_coord(x),adjust_coord(y))
+}
+
+fn calculate_value((x,y) : (i32, i32), rows: &[[Option<i32> ; ARRAY_LENGTH] ; ARRAY_LENGTH]) -> i32 {
+    if x == 0 && y == 0 {
+        return 1;
+    }
+
+    let coords = vec![(x+1, y), (x+1, y+1), (x, y+1), (x-1, y+1), (x-1, y), (x-1, y-1), (x, y-1), (x+1, y-1)];
+    let mut sum = 0;
+    for coord in coords {
+        let (actual_x, actual_y) = convert_coords(coord);
+        match rows[actual_x as usize][actual_y as usize] {
+            None => {},
+            Some(val) => { sum += val; }
+        }
+    }
+
+    return sum;
 }
