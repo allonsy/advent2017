@@ -1,8 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 
-
-const FILE_NAME : &str = "input.txt";
+const FILE_NAME: &str = "input.txt";
 
 fn read_input() -> Vec<Vec<i32>> {
     let mut f = File::open(FILE_NAME).unwrap();
@@ -35,7 +34,7 @@ fn main() {
     println!("checksum is: {}", sum);
 }
 
-fn process_row(row : &Vec<i32>) -> i32 {
+fn process_row(row: &Vec<i32>) -> i32 {
     let mut sum = 0;
     for val1 in row {
         for val2 in row {

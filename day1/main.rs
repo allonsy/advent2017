@@ -4,14 +4,18 @@ fn main() {
     println!("{}", get_sum(INPUT.to_owned()));
 }
 
-fn get_sum(input : String) -> u32 {
+fn get_sum(input: String) -> u32 {
     let mut sum = 0;
     let mut iter = input.chars();
     let firstOption = iter.next();
-    let mut first : char;
+    let mut first: char;
     match firstOption {
-        Some(val) => { first = val; },
-        None => { return sum; }
+        Some(val) => {
+            first = val;
+        }
+        None => {
+            return sum;
+        }
     }
 
     loop {
@@ -19,16 +23,19 @@ fn get_sum(input : String) -> u32 {
             Some(second) => {
                 if first == second {
                     let intVal = match char::to_digit(first, 10) {
-                        Some(val) => { val },
-                        None => { panic!("character isn't a number!"); }
+                        Some(val) => val,
+                        None => {
+                            panic!("character isn't a number!");
+                        }
                     };
                     sum = sum + intVal;
-                }
-                else {
+                } else {
                     first = second;
                 }
-            },
-            None => { break; }
+            }
+            None => {
+                break;
+            }
         }
     }
 
@@ -36,8 +43,10 @@ fn get_sum(input : String) -> u32 {
     let second = input.chars().nth(input.len() - 1).unwrap();
     if first == second {
         let intVal = match char::to_digit(first, 10) {
-            Some(val) => { val },
-            None => { panic!("character isn't a number!"); }
+            Some(val) => val,
+            None => {
+                panic!("character isn't a number!");
+            }
         };
         sum = sum + intVal;
     }

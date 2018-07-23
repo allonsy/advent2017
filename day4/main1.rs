@@ -31,10 +31,10 @@ fn check_validity(words: Vec<String>) -> bool {
 fn get_passphrases() -> Vec<Vec<String>> {
     let lines = util::read_file_lines("input.txt");
 
-    let mut phrases : Vec<Vec<String>> = Vec::new();
+    let mut phrases: Vec<Vec<String>> = Vec::new();
 
     for line in lines {
-        let mut words : Vec<String> = Vec::new();
+        let mut words: Vec<String> = Vec::new();
         for word in line.split_whitespace() {
             words.push(word.to_string());
         }

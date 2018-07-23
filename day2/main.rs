@@ -1,9 +1,8 @@
 use std::fs::File;
-use std::io::Read;
 use std::i32;
+use std::io::Read;
 
-
-const FILE_NAME : &str = "input.txt";
+const FILE_NAME: &str = "input.txt";
 
 fn read_input() -> Vec<Vec<i32>> {
     let mut f = File::open(FILE_NAME).unwrap();
@@ -37,7 +36,7 @@ fn main() {
     println!("checksum is: {}", sum);
 }
 
-fn get_max_min(row : &Vec<i32>) -> (i32, i32) {
+fn get_max_min(row: &Vec<i32>) -> (i32, i32) {
     let mut max = i32::MIN;
     let mut min = i32::MAX;
     for val in row {

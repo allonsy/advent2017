@@ -1,13 +1,11 @@
-
 use std::collections::HashMap;
 
-const ARRAY_SIZE : usize = 16;
+const ARRAY_SIZE: usize = 16;
 
 fn main() {
+    let mut blocks: [i32; ARRAY_SIZE] = [5, 1, 10, 0, 1, 7, 13, 14, 3, 12, 8, 10, 7, 12, 0, 6];
 
-    let mut blocks : [i32 ; ARRAY_SIZE] = [5, 1, 10, 0, 1, 7, 13, 14, 3, 12, 8, 10, 7, 12, 0, 6];
-
-    let mut seen_blocks : HashMap<[i32 ; ARRAY_SIZE], i32> = HashMap::new();
+    let mut seen_blocks: HashMap<[i32; ARRAY_SIZE], i32> = HashMap::new();
     seen_blocks.insert(blocks, 0);
     let mut num_iterations = 0;
 
@@ -26,13 +24,16 @@ fn main() {
         num_iterations += 1;
         let seen_before = seen_blocks.insert(blocks, num_iterations);
         if seen_before.is_some() {
-            println!("number of iterations is: {}", num_iterations - seen_before.unwrap());
+            println!(
+                "number of iterations is: {}",
+                num_iterations - seen_before.unwrap()
+            );
             break;
         }
     }
 }
 
-fn get_max_index(blocks : &[i32 ; ARRAY_SIZE]) -> usize {
+fn get_max_index(blocks: &[i32; ARRAY_SIZE]) -> usize {
     let mut max = blocks[0];
     let mut max_idx = 0;
     for i in 1..ARRAY_SIZE {

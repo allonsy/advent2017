@@ -1,8 +1,5 @@
-
-
-
-const TARGET_NUMBER : i32 = 368078;
-const ARRAY_LENGTH : usize = 1000;
+const TARGET_NUMBER: i32 = 368078;
+const ARRAY_LENGTH: usize = 1000;
 
 enum Direction {
     Up,
@@ -14,20 +11,20 @@ enum Direction {
 impl Direction {
     fn next(self) -> Direction {
         match self {
-            Direction::Up => { Direction::Left },
-            Direction::Left => { Direction::Down },
-            Direction::Down => { Direction::Right },
-            Direction::Right => { Direction::Up }
+            Direction::Up => Direction::Left,
+            Direction::Left => Direction::Down,
+            Direction::Down => Direction::Right,
+            Direction::Right => Direction::Up,
         }
     }
 }
 
 fn main() {
-    let mut rows : [[Option<i32> ; ARRAY_LENGTH] ; ARRAY_LENGTH] =
-        [[None ; ARRAY_LENGTH] ; ARRAY_LENGTH];
+    let mut rows: [[Option<i32>; ARRAY_LENGTH]; ARRAY_LENGTH] =
+        [[None; ARRAY_LENGTH]; ARRAY_LENGTH];
 
     let mut cur_num = 1;
-    let mut cur_coord = (0,0);
+    let mut cur_coord = (0, 0);
     let mut cur_dir = Direction::Right;
 
     let mut num_sides_left = 1;
@@ -58,21 +55,21 @@ fn main() {
     println!("distance is: {}", get_distance(cur_coord));
 }
 
-fn get_distance((x,y) : (i32, i32)) -> i32 {
+fn get_distance((x, y): (i32, i32)) -> i32 {
     i32::abs(x) + i32::abs(y)
 }
 
-fn increment_coords((x,y) : (i32, i32), dir : &Direction) -> (i32, i32) {
+fn increment_coords((x, y): (i32, i32), dir: &Direction) -> (i32, i32) {
     match dir {
-        Direction::Up => { (x, y + 1) },
-        Direction::Down => { (x, y - 1) },
-        Direction::Left => { (x - 1, y) },
-        Direction::Right => { (x + 1, y) }
+        Direction::Up => (x, y + 1),
+        Direction::Down => (x, y - 1),
+        Direction::Left => (x - 1, y),
+        Direction::Right => (x + 1, y),
     }
 }
 
-fn convert_coords((x,y) : (i32, i32)) -> (i32, i32) {
-    let adjust_coord = | c | {
+fn convert_coords((x, y): (i32, i32)) -> (i32, i32) {
+    let adjust_coord = |c| {
         if c < 0 {
             (ARRAY_LENGTH as i32) + c
         } else {
@@ -80,5 +77,5 @@ fn convert_coords((x,y) : (i32, i32)) -> (i32, i32) {
         }
     };
 
-    (adjust_coord(x),adjust_coord(y))
+    (adjust_coord(x), adjust_coord(y))
 }
