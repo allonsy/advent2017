@@ -2,6 +2,7 @@
 mod util;
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -42,90 +43,126 @@ impl ProgramTowerInput {
 
 fn main() {
     let input = parse_input();
-    let tower = create_tower(input));
-    println!("root is: {}, {}", tower.name, is_balanced(&tower));
+    let tower = create_tower(input);
+    let (bad_node, good_weight) = analyze_children(&tower.borrow().children);
+    println!("new weight is: {}", get_new_balanced_weight(&bad_node.unwrap(), good_weight.unwrap()));
 }
 
-fn find_balanced_weight(tower: Pointer, whole_tower_ptr: Pointer) -> i32 {
-    if is_balanced(tower.borrow()) {
-        return 0;
+fn get_new_balanced_weight(tower: &Pointer, expected_weight: i64) -> i64 {
+    let (bad_child, good_weight) = analyze_children(&tower.borrow().children);
+
+    if bad_child.is_some() {
+        if good_weight.is_some() {
+            return get_new_balanced_weight(&bad_child.unwrap(), good_weight.unwrap());
+        }
+        let this_weight = tower.borrow().weight as i64;
+        return get_new_balanced_weight(&bad_child.unwrap(), expected_weight - this_weight);
     }
+
+    let bad_weight = get_bad_weight(&tower.borrow().children);
+    if bad_weight.is_none() {
+        let cur_weight = get_tower_weight(tower);
+        let diff = expected_weight - cur_weight;
+        return tower.borrow().weight as i64 + diff;
+    }
+
+    let (normal_weight, bad_node) = bad_weight.unwrap();
+    let cur_weight = get_tower_weight(&bad_node);
+    let diff = normal_weight - cur_weight;
+    return bad_node.borrow().weight as i64 + diff;
+}
+
+fn get_tower_weight(tower: &Pointer) -> i64 {
+    let mut sum: i64 = 0;
+    sum += tower.borrow().weight as i64;
+
+    for (_, child) in &tower.borrow().children {
+        sum += get_tower_weight(&child);
+    }
+    return sum;
+}
+
+fn is_balanced(tower: &Pointer) -> bool {
     if tower.borrow().children.is_empty() {
-        return 0;
-    }
-    if tower.borrow().children.len() == 1 {
-        for child in tower.borrow().children.values() {
-            return find_balanced_weight(child.borrow_mut(), whole_tower_ptr);
-        }
-    }
-
-    for child in tower.borrow().children.values() {
-        if !is_balanced(child.borrow()) {
-            return find_balanced_weight(child.borrow_mut(), whole_tower_ptr);
-        }
-    }
-    if tower.borrow().children.len() == 2 {
-        return process_two(tower, whole_tower_ptr);
-    } else {
-        return process_many(tower);
-    }
-
-}
-
-fn process_many(tower: Pointer) -> i32 {
-    HashMap<i32, Vec<Pointer>> frequency = HashMap::new();
-
-    for child in tower.borrow().children() {
-        let tower_weight = get_tower_weight(child.borrow());
-        if frequency.contains_key(tower_weight) {
-            frequency.get(tower_weight).unwrap().push(child.clone());
-        } else {
-            frequency.insert(tower_weight, child.clone());
-        }
-    }
-    if frequency.len() != 2 {
-        panic!("frequency has length: {}", frequency.len());
-    }
-    let freq_keys: Vec<i32> = frequency.keys().collect();
-    if frequency.get(freq_keys[0]).unwrap().len() == 2 {
-        return freq_keys[0];
-    } else {
-        return freq_keys[1];
-    }
-}
-
-fn process_two(tower: Pointer, whole_tower_ptr: Pointer) -> i32 {
-    let children: Vec<Pointer> = tower.borrow().values().collect();
-}
-
-fn is_balanced(tower: &ProgramTower) -> bool {
-    if tower.children.is_empty() {
         return true;
-    } else {
-        let mut child_weight = None;
-        for child in tower.children.values() {
-            let new_weight = get_tower_weight(&child.borrow());
+    }
 
-            if child_weight.is_none() {
-                child_weight = Some(new_weight);
-            } else {
-                if new_weight != child_weight.unwrap() {
+    if tower.borrow().children.len() == 1 {
+        for (_, child) in &tower.borrow().children {
+            return is_balanced(child);
+        }
+    }
+
+    let mut child_weight = None;
+    for (_, child) in &tower.borrow().children {
+        if !is_balanced(child) {
+            return false;
+        }
+        let actual_child_weight = get_tower_weight(child);
+        match child_weight {
+            None => {
+                child_weight = Some(actual_child_weight);
+            },
+            Some(wt) => {
+                if wt != actual_child_weight {
                     return false;
                 }
             }
         }
     }
-
-    true
+    return true;
 }
 
-fn get_tower_weight(tower: &ProgramTower) -> i32 {
-    let mut total = tower.weight;
-    for child in tower.children.values() {
-        total += get_tower_weight(&child.borrow());
+fn analyze_children(children: &HashMap<String, Pointer>) -> (Option<Pointer>, Option<i64>) {
+    let mut bad_child = None;
+    let mut bad_child_name = None;
+
+    for (child_name, child) in children {
+        if !is_balanced(child) {
+            bad_child = Some(child.clone());
+            bad_child_name = Some(child.borrow().name.clone());
+            break;
+        }
+    }
+    if bad_child.is_none() {
+        return (None, None);
     }
 
-    total
+    let bad_child_name_unwrap = bad_child_name.unwrap();
+    let mut good_weight = None;
+
+    for (child_name, child) in children {
+        if *child_name != bad_child_name_unwrap {
+            good_weight = Some(child.borrow().weight as i64);
+            return (bad_child, good_weight);
+        }
+    }
+
+    return (bad_child, None);
+}
+
+fn get_bad_weight(children: &HashMap<String, Pointer>) -> Option<(i64, Pointer)> {
+
+    let mut freq_map: HashMap<i64, (i32, Pointer)> = HashMap::new();
+    for (_, child) in children {
+        let this_weight = get_tower_weight(child);
+        freq_map.entry(this_weight).or_insert((0, child.clone())).0 += 1;
+    }
+
+
+    for (wt, freq) in freq_map {
+        if freq.0 == 1 {
+            let bad_child = freq.1;
+
+            for (name, child) in children {
+                if *name != bad_child.borrow().name {
+                    return Some((get_tower_weight(child), bad_child));
+                }
+            }
+        }
+    }
+
+    return None;
 }
 
 fn create_tower(input: Vec<ProgramTowerInput>) -> Pointer {
