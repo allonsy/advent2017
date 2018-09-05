@@ -15,17 +15,17 @@ fn main() {
     let mut queue = get_stream();
     consume_char(&mut queue);
     let group = parse_group(&mut queue);
-    let score = calc_score(&group, 1);
+    let score = calc_garbage(&group);
     println!("score is: {}", score);
 }
 
-fn calc_score(group: &Group, this_group_score: i32) -> i32 {
-    let mut sum = this_group_score;
+fn calc_garbage(group: &Group) -> i32 {
+    let mut sum = 0;
 
     for item in &group.items {
         match item {
-            GroupItem::Group(gp) => sum += calc_score(&gp, this_group_score + 1),
-            _ => {}
+            GroupItem::Group(gp) => sum += calc_garbage(&gp),
+            GroupItem::Garbage(garb) => sum += garb.len() as i32,
         }
     }
 
