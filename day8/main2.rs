@@ -29,30 +29,25 @@ enum Relation {
     NE,
 }
 
+struct State {
+    cpu: HashMap<String, i32>,
+    highest_value: Option<i32>,
+}
+
 fn main() {
     let commands = get_commands();
-    let mut cpu_state: HashMap<String, i32> = HashMap::new();
+    let mut cpu_state = State {
+        cpu: HashMap::new(),
+        highest_value: None,
+    };
+
     for command in commands {
         run_command(&command, &mut cpu_state);
     }
-
-    let mut high_value = None;
-    for (_, reg_val) in cpu_state {
-        match high_value {
-            None => high_value = Some(reg_val),
-            Some(old_val) => {
-                if old_val < reg_val {
-                    high_value = Some(reg_val);
-                }
-            }
-        }
-    }
-
-    let high_num = high_value.unwrap();
-    println!("value is: {}", high_num);
+    println!("value is: {}", cpu_state.highest_value.unwrap());
 }
 
-fn run_command(instruction: &Instruction, state: &mut HashMap<String, i32>) {
+fn run_command(instruction: &Instruction, state: &mut State) {
     let cond = &instruction.condition;
     if eval_condition(state, cond) {
         apply_tranform(
@@ -64,7 +59,7 @@ fn run_command(instruction: &Instruction, state: &mut HashMap<String, i32>) {
     }
 }
 
-fn eval_condition(state: &mut HashMap<String, i32>, condition: &Condition) -> bool {
+fn eval_condition(state: &mut State, condition: &Condition) -> bool {
     let register_value = get_register_value(state, condition.register.clone());
     let operand = condition.operand;
 
@@ -78,25 +73,40 @@ fn eval_condition(state: &mut HashMap<String, i32>, condition: &Condition) -> bo
     }
 }
 
-fn apply_tranform(
-    state: &mut HashMap<String, i32>,
-    register: String,
-    command: &Command,
-    operand: i32,
-) {
-    match *command {
-        Command::Inc => *state.entry(register).or_insert(0) += operand,
-        Command::Dec => *state.entry(register).or_insert(0) -= operand,
+fn apply_tranform(state: &mut State, register: String, command: &Command, operand: i32) {
+    let new_val;
+    {
+        let entry = state.cpu.entry(register).or_insert(0);
+        match *command {
+            Command::Inc => *entry += operand,
+            Command::Dec => *entry -= operand,
+        }
+        new_val = *entry;
     }
+    update_highest_value(state, new_val);
 }
 
-fn get_register_value(state: &mut HashMap<String, i32>, register: String) -> i32 {
-    if state.contains_key(&register) {
-        return *state.get(&register).unwrap();
+fn get_register_value(state: &mut State, register: String) -> i32 {
+    if state.cpu.contains_key(&register) {
+        return *state.cpu.get(&register).unwrap();
     }
 
-    state.insert(register, 0);
+    state.cpu.insert(register, 0);
+    update_highest_value(state, 0);
     return 0;
+}
+
+fn update_highest_value(state: &mut State, new_val: i32) {
+    match state.highest_value {
+        None => state.highest_value = Some(new_val),
+        Some(old_val) => {
+            state.highest_value = if old_val < new_val {
+                Some(new_val)
+            } else {
+                Some(old_val)
+            }
+        }
+    };
 }
 
 fn get_commands() -> Vec<Instruction> {

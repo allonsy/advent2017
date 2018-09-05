@@ -1,8 +1,7 @@
-
 mod util;
 
-use std::collections::HashMap;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 type Pointer = Rc<RefCell<ProgramTower>>;
@@ -16,7 +15,7 @@ struct ProgramTower {
 
 impl ProgramTower {
     fn new(name: String, weight: i32, children: HashMap<String, Pointer>) -> ProgramTower {
-        ProgramTower{
+        ProgramTower {
             name: name,
             weight: weight,
             children: children,
@@ -32,7 +31,7 @@ struct ProgramTowerInput {
 
 impl ProgramTowerInput {
     fn new(name: String, weight: i32, children: Vec<String>) -> ProgramTowerInput {
-        ProgramTowerInput{
+        ProgramTowerInput {
             name: name,
             weight: weight,
             children: children,
@@ -66,13 +65,19 @@ fn create_tower(input: Vec<ProgramTowerInput>) -> Pointer {
         for child_name in node.children {
             if already_seen.contains_key(&child_name) {
                 let ptr = already_seen.get(&child_name).unwrap();
-                this_node.borrow_mut().children.insert(child_name.clone(), ptr.clone());
+                this_node
+                    .borrow_mut()
+                    .children
+                    .insert(child_name.clone(), ptr.clone());
                 roots.remove(&child_name);
             } else {
                 let new_child_node = ProgramTower::new(child_name.clone(), 0, HashMap::new());
                 let child_ptr = Rc::new(RefCell::new(new_child_node));
                 already_seen.insert(child_name.clone(), child_ptr.clone());
-                this_node.borrow_mut().children.insert(child_name, child_ptr);
+                this_node
+                    .borrow_mut()
+                    .children
+                    .insert(child_name, child_ptr);
             }
         }
     }

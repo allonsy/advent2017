@@ -1,9 +1,8 @@
-
 mod util;
 
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::cell::RefCell;
 use std::rc::Rc;
 
 type Pointer = Rc<RefCell<ProgramTower>>;
@@ -17,7 +16,7 @@ struct ProgramTower {
 
 impl ProgramTower {
     fn new(name: String, weight: i32, children: HashMap<String, Pointer>) -> ProgramTower {
-        ProgramTower{
+        ProgramTower {
             name: name,
             weight: weight,
             children: children,
@@ -33,7 +32,7 @@ struct ProgramTowerInput {
 
 impl ProgramTowerInput {
     fn new(name: String, weight: i32, children: Vec<String>) -> ProgramTowerInput {
-        ProgramTowerInput{
+        ProgramTowerInput {
             name: name,
             weight: weight,
             children: children,
@@ -45,7 +44,10 @@ fn main() {
     let input = parse_input();
     let tower = create_tower(input);
     let (bad_node, good_weight) = analyze_children(&tower.borrow().children);
-    println!("new weight is: {}", get_new_balanced_weight(&bad_node.unwrap(), good_weight.unwrap()));
+    println!(
+        "new weight is: {}",
+        get_new_balanced_weight(&bad_node.unwrap(), good_weight.unwrap())
+    );
 }
 
 fn get_new_balanced_weight(tower: &Pointer, expected_weight: i64) -> i64 {
@@ -102,7 +104,7 @@ fn is_balanced(tower: &Pointer) -> bool {
         match child_weight {
             None => {
                 child_weight = Some(actual_child_weight);
-            },
+            }
             Some(wt) => {
                 if wt != actual_child_weight {
                     return false;
@@ -142,13 +144,11 @@ fn analyze_children(children: &HashMap<String, Pointer>) -> (Option<Pointer>, Op
 }
 
 fn get_bad_weight(children: &HashMap<String, Pointer>) -> Option<(i64, Pointer)> {
-
     let mut freq_map: HashMap<i64, (i32, Pointer)> = HashMap::new();
     for (_, child) in children {
         let this_weight = get_tower_weight(child);
         freq_map.entry(this_weight).or_insert((0, child.clone())).0 += 1;
     }
-
 
     for (wt, freq) in freq_map {
         if freq.0 == 1 {
@@ -185,13 +185,19 @@ fn create_tower(input: Vec<ProgramTowerInput>) -> Pointer {
         for child_name in node.children {
             if already_seen.contains_key(&child_name) {
                 let ptr = already_seen.get(&child_name).unwrap();
-                this_node.borrow_mut().children.insert(child_name.clone(), ptr.clone());
+                this_node
+                    .borrow_mut()
+                    .children
+                    .insert(child_name.clone(), ptr.clone());
                 roots.remove(&child_name);
             } else {
                 let new_child_node = ProgramTower::new(child_name.clone(), 0, HashMap::new());
                 let child_ptr = Rc::new(RefCell::new(new_child_node));
                 already_seen.insert(child_name.clone(), child_ptr.clone());
-                this_node.borrow_mut().children.insert(child_name, child_ptr);
+                this_node
+                    .borrow_mut()
+                    .children
+                    .insert(child_name, child_ptr);
             }
         }
     }
