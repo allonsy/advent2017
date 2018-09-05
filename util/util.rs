@@ -16,3 +16,11 @@ pub fn read_file_lines(fname: &str) -> Vec<String> {
     }
     return rows;
 }
+
+pub fn read_file_string(fname: &str) -> String {
+    let mut f = File::open(fname).unwrap();
+
+    let mut contents = String::new();
+    f.read_to_string(&mut contents).unwrap();
+    return contents;
+}
