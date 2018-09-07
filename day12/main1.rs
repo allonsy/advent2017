@@ -1,11 +1,11 @@
 mod util;
 
-use std::collections::HashSet;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 struct Node {
     name: i32,
-    connections: HashSet<i32>
+    connections: HashSet<i32>,
 }
 
 fn main() {
@@ -18,7 +18,11 @@ fn main() {
     println!("group size of 0 is: {}", seen_before.len());
 }
 
-fn get_connected_nodes(seen_before: &mut HashSet<i32>, node_map: &HashMap<i32, Node>, cur_node: &Node) {
+fn get_connected_nodes(
+    seen_before: &mut HashSet<i32>,
+    node_map: &HashMap<i32, Node>,
+    cur_node: &Node,
+) {
     seen_before.insert(cur_node.name);
 
     for conn in &cur_node.connections {
@@ -64,7 +68,7 @@ fn create_connection(node_map: &mut HashMap<i32, Node>, from: i32, to: i32) {
         if !node_map.contains_key(&from) {
             let new_node = Node {
                 name: from,
-                connections: HashSet::new()
+                connections: HashSet::new(),
             };
             node_map.insert(from, new_node);
         }
@@ -77,7 +81,7 @@ fn create_connection(node_map: &mut HashMap<i32, Node>, from: i32, to: i32) {
         new_conns.insert(to);
         let new_node = Node {
             name: from,
-            connections: new_conns
+            connections: new_conns,
         };
         node_map.insert(from, new_node);
     }
@@ -89,7 +93,7 @@ fn create_connection(node_map: &mut HashMap<i32, Node>, from: i32, to: i32) {
         new_conns.insert(from);
         let new_node = Node {
             name: to,
-            connections: new_conns
+            connections: new_conns,
         };
         node_map.insert(to, new_node);
     }
