@@ -5,7 +5,7 @@ use std::collections::HashMap;
 struct Layer {
     cur_pos: i32,
     range: i32,
-    is_down: bool
+    is_down: bool,
 }
 
 fn main() {
@@ -41,7 +41,7 @@ fn get_layers() -> HashMap<i32, Layer> {
         let new_layer = Layer {
             cur_pos: 0,
             range: range_no,
-            is_down: true
+            is_down: true,
         };
         layer_map.insert(layer_no, new_layer);
     }
@@ -63,11 +63,7 @@ fn tick_layers(layers: &mut HashMap<i32, Layer>) {
             layer.cur_pos -= 1;
             if layer.cur_pos < 0 {
                 layer.is_down = true;
-                layer.cur_pos = if layer.range > 1 {
-                    1
-                } else {
-                    0
-                }
+                layer.cur_pos = if layer.range > 1 { 1 } else { 0 }
             }
         }
     }
