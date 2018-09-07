@@ -17,8 +17,8 @@ fn main() {
 
     for i in 0..GRID_DIMENSION {
         for j in 0..GRID_DIMENSION {
-            if grid[i][j] && !seen_before.contains(&(i,j)) {
-                process_region(&mut seen_before, &grid, (i,j));
+            if grid[i][j] && !seen_before.contains(&(i, j)) {
+                process_region(&mut seen_before, &grid, (i, j));
                 num_regions += 1;
             }
         }
@@ -30,8 +30,8 @@ fn main() {
 fn process_region(
     seen_before: &mut HashSet<(usize, usize)>,
     grid: &[[bool; GRID_DIMENSION]; GRID_DIMENSION],
-    coords: (usize, usize)) {
-
+    coords: (usize, usize),
+) {
     if seen_before.contains(&coords) {
         return;
     }
@@ -83,25 +83,28 @@ fn get_char_bytes(c: char) -> [bool; 4] {
         'd' => [true, true, false, true],
         'e' => [true, true, true, false],
         'f' => [true, true, true, true],
-        _ => panic!("unknown char: {}", c)
+        _ => panic!("unknown char: {}", c),
     }
 }
 
-fn get_filled_neighbors(coords: (usize, usize), grid: &[[bool; GRID_DIMENSION]; GRID_DIMENSION]) -> Vec<(usize, usize)> {
-    let (x,y) = coords;
+fn get_filled_neighbors(
+    coords: (usize, usize),
+    grid: &[[bool; GRID_DIMENSION]; GRID_DIMENSION],
+) -> Vec<(usize, usize)> {
+    let (x, y) = coords;
     let mut neighbors = Vec::new();
 
-    if x + 1 < GRID_DIMENSION && grid[x+1][y] {
-        neighbors.push((x+1, y));
+    if x + 1 < GRID_DIMENSION && grid[x + 1][y] {
+        neighbors.push((x + 1, y));
     }
-    if x >= 1 && grid[x-1][y] {
-        neighbors.push((x-1, y));
+    if x >= 1 && grid[x - 1][y] {
+        neighbors.push((x - 1, y));
     }
-    if y+1 < GRID_DIMENSION && grid[x][y+1] {
-        neighbors.push((x, y+1));
+    if y + 1 < GRID_DIMENSION && grid[x][y + 1] {
+        neighbors.push((x, y + 1));
     }
-    if y >= 1 && grid[x][y-1] {
-        neighbors.push((x, y-1));
+    if y >= 1 && grid[x][y - 1] {
+        neighbors.push((x, y - 1));
     }
     return neighbors;
 }

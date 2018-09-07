@@ -58,6 +58,6 @@ fn get_char_bytes(c: char) -> [bool; 4] {
         'd' => [true, true, false, true],
         'e' => [true, true, true, false],
         'f' => [true, true, true, true],
-        _ => panic!("unknown char: {}", c)
+        _ => panic!("unknown char: {}", c),
     }
 }
