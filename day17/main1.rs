@@ -57,7 +57,6 @@ fn main() {
     let mut buff = CircularBuffer::new();
     for _ in 0..NUM_ROUNDS {
         buff.perform_round();
-        //buff.print_buf();
     }
 
     println!("Number is: {}", buff.get_next_num());
