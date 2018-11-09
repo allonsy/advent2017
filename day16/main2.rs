@@ -11,16 +11,10 @@ enum Instruction {
 fn main() {
     let instructions = get_instructions();
     let mut arr = get_start_arr();
+    count_partner(&instructions);
 
     for i in 0..1000000000 {
-        for instruction in &instructions {
-            match instruction {
-                Instruction::Spin(s) => arr = rotate(*s, arr),
-                Instruction::Exchange(x, y) => swap_index(&mut arr, *x, *y),
-                Instruction::Partner(a, b) => swap_chars(&mut arr, *a, *b),
-            }
-        }
-        println!("done loop: {}", i);
+        run_iteration(&mut arr);
     }
 
     print!("Array is: ");
@@ -92,6 +86,20 @@ fn get_instructions() -> Vec<Instruction> {
     return instructions;
 }
 
+fn count_partner(instructions: &Vec<Instruction>) {
+    let total = instructions.len();
+    let mut num_partner = 0;
+
+    for instruction in instructions {
+        match instruction {
+            Instruction::Partner(_, _) => num_partner += 1,
+            _ => { }
+        }
+    }
+
+    println!("partnering is {} out of {}", num_partner, total);
+}
+
 fn split_input(input: &[u8]) -> (&[u8], &[u8]) {
     let mut i = 0;
     while i < input.len() {
@@ -101,4 +109,27 @@ fn split_input(input: &[u8]) -> (&[u8], &[u8]) {
         i += 1;
     }
     return (&input[0..i], &input[i + 1..input.len()]);
+}
+
+fn run_iteration(arr: &mut [char; ARR_SIZE]) {
+    let arr_clone = arr.clone();
+    if *arr == arr_clone {
+
+    }
+    arr[0] = arr_clone[8];
+    arr[1] = arr_clone[14];
+    arr[2] = arr_clone[13];
+    arr[3] = arr_clone[11];
+    arr[4] = arr_clone[1];
+    arr[5] = arr_clone[10];
+    arr[6] = arr_clone[5];
+    arr[7] = arr_clone[4];
+    arr[8] = arr_clone[0];
+    arr[9] = arr_clone[9];
+    arr[10] = arr_clone[6];
+    arr[11] = arr_clone[3];
+    arr[12] = arr_clone[12];
+    arr[13] = arr_clone[15];
+    arr[14] = arr_clone[7];
+    arr[15] = arr_clone[2];
 }
