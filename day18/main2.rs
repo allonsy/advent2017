@@ -1,9 +1,10 @@
 mod util;
 
 use std::collections::HashMap;
-use std::sync::mpsc::channel;
-use std::sync::mpsc::Sender;
-use std::sync::mpsc::Receiver;
+use std::rc::Rc;
+use std::cell::RefCell;
+
+type Queue = Rc<RefCell<Vec<i64>>>;
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -53,13 +54,13 @@ impl Value {
 #[derive(Clone)]
 #[derive(Debug)]
 enum Instruction {
-    SOUND(char),
+    SEND(char),
     SET(char, Value),
     ADD(char, Value),
     MUL(char, Value),
     MOD(char, Value),
-    RECOVER(char),
-    JUMP_GREATER_ZERO(char, Value),
+    RECEIVE(char),
+    JUMP_GREATER_ZERO(Value, Value),
 }
 
 fn get_instructions() -> Vec<Instruction> {
@@ -69,7 +70,7 @@ fn get_instructions() -> Vec<Instruction> {
     for line in lines {
         let words: Vec<&str> = line.split(" ").collect();
         match words[0] {
-            "snd" => { instructions.push(Instruction::SOUND(words[1].parse::<char>().unwrap())); },
+            "snd" => { instructions.push(Instruction::SEND(words[1].parse::<char>().unwrap())); },
             "set" => { 
                     instructions.push(Instruction::SET(
                         words[1].parse::<char>().unwrap(),
@@ -95,13 +96,13 @@ fn get_instructions() -> Vec<Instruction> {
                 ));
             },
             "rcv" => { 
-                instructions.push(Instruction::RECOVER(
+                instructions.push(Instruction::RECEIVE(
                     words[1].parse::<char>().unwrap()
                 ));
             },
             "jgz" => { 
                 instructions.push(Instruction::JUMP_GREATER_ZERO(
-                    words[1].parse::<char>().unwrap(),
+                    Value::parse_value(words[1]),
                     Value::parse_value(words[2])
                 ));
             },
@@ -116,32 +117,31 @@ struct State {
     instructions: Vec<Instruction>,
     instruction_ptr: usize,
     registers: HashMap<char, i64>,
-    last_played: Option<i64>,
-    last_recover: Option<i64>,
-    send_channel: Sender<i64>,
-    recv_channel: Receiver<i64>,
+    send_channel: Queue,
+    recv_channel: Queue,
     id: usize,
     num_sends: usize,
 }
 
 impl State {
-    fn new(instructions: Vec<Instruction>, sc: Sender<i64>, rc: Receiver<i64>, id: usize) -> State {
+    fn new(instructions: Vec<Instruction>, sc: Queue, rc: Queue, id: usize) -> State {
         let mut st = State {
             instructions: instructions,
             instruction_ptr: 0,
             registers: HashMap::new(),
-            last_played: None,
-            last_recover: None,
             send_channel: sc,
             recv_channel: rc,
             id: id,
-            num_sends: 0,
+            num_sends: 0
         };
-        st.registers.insert('p', id as i64);
+        st.registers.insert('p', st.id as i64);
         st
     }
 
     fn get_register_value(&mut self, reg_name: char) -> i64 {
+        if !self.registers.contains_key(&reg_name) {
+            println!("creating register: {}", &reg_name);
+        }
         return *self.registers.entry(reg_name).or_insert(0);
     }
 
@@ -152,15 +152,24 @@ impl State {
         return self.get_register_value(val.get_register());
     }
 
-    fn exec_instruction(&mut self) -> Option<()> {
+    fn is_locked(&self) -> bool {
         if self.instruction_ptr >= self.instructions.len() {
-            return Some(());
+            return true;
         }
+        let is_recv_inst = match self.instructions[self.instruction_ptr] {
+            Instruction::RECEIVE(_) => true ,
+            _ => false
+        };
+        return is_recv_inst && self.recv_channel.borrow().is_empty();
+    }
+
+    fn exec_instruction(&mut self) {
         let cur_instruction = self.instructions[self.instruction_ptr].clone();
         match cur_instruction {
-            Instruction::SOUND(reg) => {
+            Instruction::SEND(reg) => {
                 let val = self.get_register_value(reg);
-                self.last_played = Some(val);
+                self.send_channel.borrow_mut().push(val);
+                self.num_sends += 1;
                 self.instruction_ptr += 1;
             },
             Instruction::SET(reg, val) => {
@@ -186,15 +195,18 @@ impl State {
                 self.registers.insert(reg, old_val % val);
                 self.instruction_ptr += 1;
             },
-            Instruction::RECOVER(reg) => {
-                let val = self.get_register_value(reg);
-                if val != 0 {
-                    self.last_recover = self.last_played.clone();
-                }
-                self.instruction_ptr += 1;
+            Instruction::RECEIVE(reg) => {
+                let mut recv_queue = self.recv_channel.borrow_mut();
+                match recv_queue.pop() {
+                    Some(v) => {
+                        self.registers.insert(reg, v);
+                        self.instruction_ptr += 1;
+                    },
+                    None => { }
+                };
             },
             Instruction::JUMP_GREATER_ZERO(reg, val) => {
-                let reg_val = self.get_register_value(reg);
+                let reg_val = self.get_value(reg);
                 if reg_val > 0 {
                     let jump_val = self.get_value(val);
                     self.instruction_ptr = (self.instruction_ptr as i64 + jump_val) as usize;
@@ -203,24 +215,26 @@ impl State {
                 }
             }
         }
-        None
     }
 }
 
 fn main() {
     let instructions = get_instructions();
+    println!("instructions are: {:?}", instructions);
 
-    let (sender1, recv1) = channel();
-    let (sender2, recv2) = channel();
+    let queue0 = Rc::new(RefCell::new(Vec::new()));
+    let queue1 = Rc::new(RefCell::new(Vec::new()));
 
-    let mut state1 = State::new(instructions.clone(), sender2, recv1, 0);
-    let mut state2 = State::new(instructions.clone(), sender1, recv2, 1);
+    let mut state1 = State::new(instructions.clone(), queue1.clone(), queue0.clone(), 0);
+    let mut state2 = State::new(instructions.clone(), queue0.clone(), queue1.clone(), 1);
 
     loop {
         state1.exec_instruction();
-        if state1.last_recover.is_some() {
-            println!("Number is: {}", state1.last_recover.unwrap());
-            return;
+        state2.exec_instruction();
+
+        if state1.is_locked() && state2.is_locked() {
+            break;
         }
     }
+    println!("t1 number of sends is: {}", state2.num_sends);
 }

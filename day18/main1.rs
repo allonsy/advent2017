@@ -56,7 +56,7 @@ enum Instruction {
     MUL(char, Value),
     MOD(char, Value),
     RECOVER(char),
-    JUMP_GREATER_ZERO(char, Value),
+    JUMP_GREATER_ZERO(Value, Value),
 }
 
 fn get_instructions() -> Vec<Instruction> {
@@ -98,7 +98,7 @@ fn get_instructions() -> Vec<Instruction> {
             },
             "jgz" => { 
                 instructions.push(Instruction::JUMP_GREATER_ZERO(
-                    words[1].parse::<char>().unwrap(),
+                    Value::parse_value(words[1]),
                     Value::parse_value(words[2])
                 ));
             },
@@ -178,7 +178,7 @@ impl State {
                 self.instruction_ptr += 1;
             },
             Instruction::JUMP_GREATER_ZERO(reg, val) => {
-                let reg_val = self.get_register_value(reg);
+                let reg_val = self.get_value(reg);
                 if reg_val > 0 {
                     let jump_val = self.get_value(val);
                     self.instruction_ptr = (self.instruction_ptr as i64 + jump_val) as usize;
