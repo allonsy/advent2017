@@ -3,8 +3,9 @@ mod util;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::collections::VecDeque;
 
-type Queue = Rc<RefCell<Vec<i64>>>;
+type Queue = Rc<RefCell<VecDeque<i64>>>;
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -139,9 +140,6 @@ impl State {
     }
 
     fn get_register_value(&mut self, reg_name: char) -> i64 {
-        if !self.registers.contains_key(&reg_name) {
-            println!("creating register: {}", &reg_name);
-        }
         return *self.registers.entry(reg_name).or_insert(0);
     }
 
@@ -168,7 +166,7 @@ impl State {
         match cur_instruction {
             Instruction::SEND(reg) => {
                 let val = self.get_register_value(reg);
-                self.send_channel.borrow_mut().push(val);
+                self.send_channel.borrow_mut().push_back(val);
                 self.num_sends += 1;
                 self.instruction_ptr += 1;
             },
@@ -197,7 +195,7 @@ impl State {
             },
             Instruction::RECEIVE(reg) => {
                 let mut recv_queue = self.recv_channel.borrow_mut();
-                match recv_queue.pop() {
+                match recv_queue.pop_front() {
                     Some(v) => {
                         self.registers.insert(reg, v);
                         self.instruction_ptr += 1;
@@ -208,7 +206,11 @@ impl State {
             Instruction::JUMP_GREATER_ZERO(reg, val) => {
                 let reg_val = self.get_value(reg);
                 if reg_val > 0 {
-                    let jump_val = self.get_value(val);
+                    let mut jump_val = self.get_value(val);
+                    let new_ptr = self.instruction_ptr as i64 + jump_val;
+                    if new_ptr < 0 {
+                        jump_val = self.instructions.len() as i64;
+                    }
                     self.instruction_ptr = (self.instruction_ptr as i64 + jump_val) as usize;
                 } else {
                     self.instruction_ptr += 1;
@@ -220,19 +222,20 @@ impl State {
 
 fn main() {
     let instructions = get_instructions();
-    println!("instructions are: {:?}", instructions);
 
-    let queue0 = Rc::new(RefCell::new(Vec::new()));
-    let queue1 = Rc::new(RefCell::new(Vec::new()));
+    let queue0 = Rc::new(RefCell::new(VecDeque::new()));
+    let queue1 = Rc::new(RefCell::new(VecDeque::new()));
 
     let mut state1 = State::new(instructions.clone(), queue1.clone(), queue0.clone(), 0);
     let mut state2 = State::new(instructions.clone(), queue0.clone(), queue1.clone(), 1);
 
     loop {
+
         state1.exec_instruction();
         state2.exec_instruction();
 
         if state1.is_locked() && state2.is_locked() {
+            println!("exiting out due to deadlock!");
             break;
         }
     }
