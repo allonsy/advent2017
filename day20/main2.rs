@@ -1,5 +1,7 @@
 mod util;
 
+use std::collections::HashSet;
+
 #[derive(Debug)]
 struct Particle {
     x: i64,
@@ -13,6 +15,66 @@ struct Particle {
     az: i64,
 }
 
+impl Particle {
+    fn tick(&mut self) {
+        self.vx += self.ax;
+        self.vy += self.ay;
+        self.vz += self.az;
+
+        self.x += self.vx;
+        self.y += self.vy;
+        self.z += self.vz;
+    }
+
+    fn has_collided(&self, p1: &Particle) -> bool {
+        self.x == p1.x && self.y == p1.y && self.z == p1.z
+    }
+
+    fn might_collide(&self, p1: &Particle) -> bool {
+        let x_collide = 
+            Particle::dim_collide(self.x, self.vx, self.ax, p1.x, p1.vx, p1.ax);
+        let y_collide = 
+            Particle::dim_collide(self.y, self.vy, self.ay, p1.y, p1.vy, p1.ay);
+        let z_collide = 
+            Particle::dim_collide(self.z, self.vz, self.az, p1.z, p1.vz, p1.az);
+        return x_collide && y_collide && z_collide;
+    }
+
+    fn dim_collide(x_0: i64, v_0: i64, a_0: i64, x_1: i64, v_1: i64, a_1: i64) -> bool {
+        let b = (v_0 - v_1) as f64;
+        let a = (0.5 * a_0 as f64) - (0.5 * a_1 as f64);
+        let c = (x_0 - x_1) as f64;
+
+        if a == 0.0 {
+            if v_0 - v_1 == 0 {
+                if x_0 == x_1 {
+                    return true;
+                }
+                return false;
+            }
+            let t = (x_1 as f64 - x_0 as f64) / (v_0 as f64 - v_1 as f64);
+            if t > 0.0 {
+                return true
+            } else {
+                return false;
+            }
+        }
+
+        if (b * b) - (4.0 * a * c) < 0.0 {
+            return false;
+        }
+        let t = max( 
+            (-b + ((b*b) - (4.0 * a * c)).sqrt()) / (2.0 * a),
+            (-b - ((b*b) - (4.0 * a * c)).sqrt()) / (2.0 * a)
+        );
+        if t > 0.0 {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
 fn max(v1: f64, v2: f64) -> f64 {
     if v1 >= v2 {
         return v1;
@@ -20,108 +82,43 @@ fn max(v1: f64, v2: f64) -> f64 {
     return v2;
 }
 
-
-fn dim_collide(x_0: i64, v_0: i64, a_0: i64, x_1: i64, v_1: i64, a_1: i64) -> Option<f64> {
-    let b = (v_0 - v_1) as f64;
-    let a = (0.5 * a_0 as f64) - (0.5 * a_1 as f64);
-    let c = (x_0 - x_1) as f64;
-
-    if a == 0.0 {
-        if v_0 - v_1 == 0 {
-            if x_0 == x_1 {
-                return Some(-1.0);
-            }
-            return None;
-        }
-        let t = (x_1 as f64 - x_0 as f64) / (v_0 as f64 - v_1 as f64);
-        if t >= 0.0 {
-            //println!("collision at t: {}", t);
-            return Some(t)
-        } else {
-            return None;
-        }
-    }
-
-    if (b * b) - (4.0 * a * c) < 0.0 {
-        return None;
-    }
-    //println!("a is: {}", a);
-    let t = max( 
-        (-b + ((b*b) - (4.0 * a * c)).sqrt()) / (2.0 * a),
-        (-b - ((b*b) - (4.0 * a * c)).sqrt()) / (2.0 * a)
-    );
-    //println!("collision at t: {}", t);
-    if t >= 0.0 {
-        return Some(t);
-    } else {
-        return None;
-    }
-}
-
-fn is_integer(val: f64) -> bool {
-    return ((val as i64) as f64) == val;
-}
-
-fn collide(p1: &Particle, p2: &Particle) -> bool {
-    let x_collide_opt = dim_collide(p1.x, p1.vx, p1.ax, p2.x, p2.vx, p2.ax);
-    if x_collide_opt.is_none() {
-        return false;
-    }
-    let x_collide = x_collide_opt.unwrap();
-    if !is_integer(x_collide) {
-        //println!("throwing out collision");
-        return false;
-    }
-
-    let y_collide_opt = dim_collide(p1.y, p1.vy, p1.ay, p2.y, p2.vy, p2.ay);
-    if y_collide_opt.is_none() {
-        return false;
-    }
-    let y_collide = y_collide_opt.unwrap();
-    if !is_integer(y_collide) {
-        return false;
-    }
-
-    let z_collide_opt = dim_collide(p1.z, p1.vz, p1.az, p2.z, p2.vz, p2.az);
-    if z_collide_opt.is_none() {
-        return false;
-    }
-    let z_collide = z_collide_opt.unwrap();
-    if !is_integer(z_collide) {
-        return false;
-    }
-
-    return (x_collide == y_collide || x_collide == -1.0 || y_collide == -1.0) 
-        && (y_collide == z_collide || y_collide == -1.0 || z_collide == -1.0);
-}
-
 fn main() {
     let mut particles = get_particles();
-    let mut bubble_index = 0;
-    while bubble_index < particles.len() {
-        let mut did_collide = false;
-        if particles.is_empty() {
+    let mut tick_num = 1;
+    loop {
+        for p in &mut particles {
+            p.tick();
+        }
+
+        let mut collided = HashSet::new();
+        let mut will_collide = false;
+
+        for bubble_index in 0..(particles.len() - 1) {
+            for idx in (bubble_index + 1)..particles.len() {
+                if particles[bubble_index].has_collided(&particles[idx]) {
+                    collided.insert(bubble_index);
+                    collided.insert(idx);
+                } else {
+                    if particles[bubble_index].might_collide(&particles[idx]) {
+                        will_collide = true;
+                    }
+                }
+            }
+        }
+
+        let mut collisions: Vec<usize> = collided.into_iter().collect();
+        collisions.sort();
+        collisions.reverse();
+
+        for col in collisions {
+            particles.remove(col);
+        }
+
+        if !will_collide {
             break;
         }
 
-        let mut collisions = Vec::new();
-        for idx in bubble_index + 1..particles.len()  {
-            if collide(&particles[0], &particles[idx]) {
-                //println!("collision!");
-                did_collide = true;
-                collisions.push(idx);
-            }
-        }
-
-        if did_collide {
-            collisions.reverse();
-            for p_collision in collisions {
-                particles.remove(p_collision);
-            }
-            particles.remove(0);
-        } else {
-            bubble_index += 1;
-        }
+        tick_num += 1;
     }
 
     println!("Number of remaining particles: {}", particles.len());
