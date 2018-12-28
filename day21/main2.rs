@@ -197,7 +197,7 @@ fn main() {
     let rulebook = read_rulebook();
     let mut start = Image::new(".#./..#/###");
 
-    for _ in 0..5 {
+    for _ in 0..18 {
         start = start.iterate(&rulebook);
     }
     println!("{}", start.get_num_on());
