@@ -13,7 +13,6 @@ struct Particle {
     az: i64,
 }
 
-
 fn compare_particles(p1: &Particle, p2: &Particle) -> i32 {
     let p1_a_dist = manhattan_distance(p1.ax, p1.ay, p1.az);
     let p2_a_dist = manhattan_distance(p2.ax, p2.ay, p2.az);
@@ -66,12 +65,18 @@ fn main() {
 
 fn get_particles() -> Vec<Particle> {
     let mut particles = Vec::new();
-    
+
     for line in util::read_file_lines("input.txt") {
-        let outer_split:Vec<&str> = line.split("<").collect();
-        let positions: Vec<&str> = outer_split[1].split(">").collect::<Vec<&str>>()[0].split(",").collect();
-        let velocities: Vec<&str> = outer_split[2].split(">").collect::<Vec<&str>>()[0].split(",").collect();
-        let accelerations: Vec<&str> = outer_split[3].split(">").collect::<Vec<&str>>()[0].split(",").collect();
+        let outer_split: Vec<&str> = line.split("<").collect();
+        let positions: Vec<&str> = outer_split[1].split(">").collect::<Vec<&str>>()[0]
+            .split(",")
+            .collect();
+        let velocities: Vec<&str> = outer_split[2].split(">").collect::<Vec<&str>>()[0]
+            .split(",")
+            .collect();
+        let accelerations: Vec<&str> = outer_split[3].split(">").collect::<Vec<&str>>()[0]
+            .split(",")
+            .collect();
 
         let x = positions[0].to_string().parse::<i64>().unwrap();
         let y = positions[1].to_string().parse::<i64>().unwrap();
@@ -85,7 +90,7 @@ fn get_particles() -> Vec<Particle> {
         let ay = accelerations[1].to_string().parse::<i64>().unwrap();
         let az = accelerations[2].to_string().parse::<i64>().unwrap();
 
-        particles.push( Particle {
+        particles.push(Particle {
             x: x,
             y: y,
             z: z,
@@ -94,7 +99,7 @@ fn get_particles() -> Vec<Particle> {
             vz: vz,
             ax: ax,
             ay: ay,
-            az: az
+            az: az,
         });
     }
     return particles;

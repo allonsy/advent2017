@@ -1,4 +1,3 @@
-
 const NUM_ROUNDS: i32 = 50000000;
 const ROUND_SIZE: i32 = 369;
 
@@ -26,7 +25,7 @@ impl CircularBuffer {
     fn perform_round(&mut self) {
         self.current_position += self.round_size;
         self.current_position %= self.buf_size;
-        
+
         if self.current_position < self.zero_pos {
             self.zero_pos += 1
         }
@@ -43,7 +42,6 @@ impl CircularBuffer {
     fn get_next_num(&self) -> i32 {
         self.after_zero
     }
-
 }
 
 fn main() {

@@ -1,4 +1,3 @@
-
 const NUM_ROUNDS: i32 = 2017;
 const ROUND_SIZE: i32 = 369;
 
@@ -15,7 +14,7 @@ impl CircularBuffer {
             buffer: vec![0],
             current_position: 0,
             iter_num: 1,
-            round_size: ROUND_SIZE
+            round_size: ROUND_SIZE,
         }
     }
 
@@ -25,7 +24,8 @@ impl CircularBuffer {
         if self.current_position == self.buffer.len() as i32 - 1 {
             self.buffer.push(self.iter_num);
         } else {
-            self.buffer.insert(self.current_position as usize + 1, self.iter_num);
+            self.buffer
+                .insert(self.current_position as usize + 1, self.iter_num);
         }
         self.current_position += 1;
         self.iter_num += 1;
@@ -38,7 +38,7 @@ impl CircularBuffer {
 
     fn print_buf(&self) {
         print!("Buffer is: [");
-        for i in 0..self.buffer.len(){
+        for i in 0..self.buffer.len() {
             if i as i32 == self.current_position {
                 print!(" (");
             }
@@ -49,8 +49,6 @@ impl CircularBuffer {
         }
         println!("] ");
     }
-
-
 }
 
 fn main() {

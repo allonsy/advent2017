@@ -2,36 +2,34 @@ mod util;
 
 use std::collections::HashMap;
 
-#[derive(Clone)]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Value {
     NUMBER(i64),
-    REGISTER(char)
+    REGISTER(char),
 }
 
 impl Value {
-
     fn is_number(&self) -> bool {
         match &self {
             Value::NUMBER(_) => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn get_number(&self) -> i64 {
         match &self {
             Value::NUMBER(n) => *n,
-            _ => panic!("value isn't a number!")
+            _ => panic!("value isn't a number!"),
         }
     }
 
     fn get_register(&self) -> char {
         match &self {
             Value::REGISTER(c) => *c,
-            _ => panic!("Value isn't a register")
+            _ => panic!("Value isn't a register"),
         }
     }
-    
+
     fn parse_value(word: &str) -> Value {
         let num_parse = word.parse::<i64>();
         if num_parse.is_ok() {
@@ -47,8 +45,7 @@ impl Value {
     }
 }
 
-#[derive(Clone)]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Instruction {
     SOUND(char),
     SET(char, Value),
@@ -66,43 +63,43 @@ fn get_instructions() -> Vec<Instruction> {
     for line in lines {
         let words: Vec<&str> = line.split(" ").collect();
         match words[0] {
-            "snd" => { instructions.push(Instruction::SOUND(words[1].parse::<char>().unwrap())); },
-            "set" => { 
-                    instructions.push(Instruction::SET(
-                        words[1].parse::<char>().unwrap(),
-                        Value::parse_value(words[2])
-                    ));
-                },
-            "add" => { 
+            "snd" => {
+                instructions.push(Instruction::SOUND(words[1].parse::<char>().unwrap()));
+            }
+            "set" => {
+                instructions.push(Instruction::SET(
+                    words[1].parse::<char>().unwrap(),
+                    Value::parse_value(words[2]),
+                ));
+            }
+            "add" => {
                 instructions.push(Instruction::ADD(
                     words[1].parse::<char>().unwrap(),
-                    Value::parse_value(words[2])
+                    Value::parse_value(words[2]),
                 ));
-            },
-            "mul" => { 
+            }
+            "mul" => {
                 instructions.push(Instruction::MUL(
                     words[1].parse::<char>().unwrap(),
-                    Value::parse_value(words[2])
+                    Value::parse_value(words[2]),
                 ));
-            },
-            "mod" => { 
+            }
+            "mod" => {
                 instructions.push(Instruction::MOD(
                     words[1].parse::<char>().unwrap(),
-                    Value::parse_value(words[2])
+                    Value::parse_value(words[2]),
                 ));
-            },
-            "rcv" => { 
-                instructions.push(Instruction::RECOVER(
-                    words[1].parse::<char>().unwrap()
-                ));
-            },
-            "jgz" => { 
+            }
+            "rcv" => {
+                instructions.push(Instruction::RECOVER(words[1].parse::<char>().unwrap()));
+            }
+            "jgz" => {
                 instructions.push(Instruction::JUMP_GREATER_ZERO(
                     Value::parse_value(words[1]),
-                    Value::parse_value(words[2])
+                    Value::parse_value(words[2]),
                 ));
-            },
-            _ => panic!("Unknown Instruction: {}", words[0])
+            }
+            _ => panic!("Unknown Instruction: {}", words[0]),
         }
     }
 
@@ -124,7 +121,7 @@ impl State {
             instruction_ptr: 0,
             registers: HashMap::new(),
             last_played: None,
-            last_recover: None
+            last_recover: None,
         }
     }
 
@@ -146,37 +143,37 @@ impl State {
                 let val = self.get_register_value(reg);
                 self.last_played = Some(val);
                 self.instruction_ptr += 1;
-            },
+            }
             Instruction::SET(reg, val) => {
                 let val = self.get_value(val);
                 self.registers.insert(reg, val);
                 self.instruction_ptr += 1;
-            },
+            }
             Instruction::ADD(reg, val) => {
                 let val = self.get_value(val);
                 let old_val = self.get_register_value(reg);
                 self.registers.insert(reg, old_val + val);
                 self.instruction_ptr += 1;
-            },
+            }
             Instruction::MUL(reg, val) => {
                 let val = self.get_value(val);
                 let old_val = self.get_register_value(reg);
                 self.registers.insert(reg, old_val * val);
                 self.instruction_ptr += 1;
-            },
+            }
             Instruction::MOD(reg, val) => {
                 let val = self.get_value(val);
                 let old_val = self.get_register_value(reg);
                 self.registers.insert(reg, old_val % val);
                 self.instruction_ptr += 1;
-            },
+            }
             Instruction::RECOVER(reg) => {
                 let val = self.get_register_value(reg);
                 if val != 0 {
                     self.last_recover = self.last_played.clone();
                 }
                 self.instruction_ptr += 1;
-            },
+            }
             Instruction::JUMP_GREATER_ZERO(reg, val) => {
                 let reg_val = self.get_value(reg);
                 if reg_val > 0 {

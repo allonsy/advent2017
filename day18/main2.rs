@@ -1,42 +1,40 @@
 mod util;
 
-use std::collections::HashMap;
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::collections::VecDeque;
+use std::rc::Rc;
 
 type Queue = Rc<RefCell<VecDeque<i64>>>;
 
-#[derive(Clone)]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Value {
     NUMBER(i64),
-    REGISTER(char)
+    REGISTER(char),
 }
 
 impl Value {
-
     fn is_number(&self) -> bool {
         match &self {
             Value::NUMBER(_) => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn get_number(&self) -> i64 {
         match &self {
             Value::NUMBER(n) => *n,
-            _ => panic!("value isn't a number!")
+            _ => panic!("value isn't a number!"),
         }
     }
 
     fn get_register(&self) -> char {
         match &self {
             Value::REGISTER(c) => *c,
-            _ => panic!("Value isn't a register")
+            _ => panic!("Value isn't a register"),
         }
     }
-    
+
     fn parse_value(word: &str) -> Value {
         let num_parse = word.parse::<i64>();
         if num_parse.is_ok() {
@@ -52,8 +50,7 @@ impl Value {
     }
 }
 
-#[derive(Clone)]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Instruction {
     SEND(char),
     SET(char, Value),
@@ -71,43 +68,43 @@ fn get_instructions() -> Vec<Instruction> {
     for line in lines {
         let words: Vec<&str> = line.split(" ").collect();
         match words[0] {
-            "snd" => { instructions.push(Instruction::SEND(words[1].parse::<char>().unwrap())); },
-            "set" => { 
-                    instructions.push(Instruction::SET(
-                        words[1].parse::<char>().unwrap(),
-                        Value::parse_value(words[2])
-                    ));
-                },
-            "add" => { 
+            "snd" => {
+                instructions.push(Instruction::SEND(words[1].parse::<char>().unwrap()));
+            }
+            "set" => {
+                instructions.push(Instruction::SET(
+                    words[1].parse::<char>().unwrap(),
+                    Value::parse_value(words[2]),
+                ));
+            }
+            "add" => {
                 instructions.push(Instruction::ADD(
                     words[1].parse::<char>().unwrap(),
-                    Value::parse_value(words[2])
+                    Value::parse_value(words[2]),
                 ));
-            },
-            "mul" => { 
+            }
+            "mul" => {
                 instructions.push(Instruction::MUL(
                     words[1].parse::<char>().unwrap(),
-                    Value::parse_value(words[2])
+                    Value::parse_value(words[2]),
                 ));
-            },
-            "mod" => { 
+            }
+            "mod" => {
                 instructions.push(Instruction::MOD(
                     words[1].parse::<char>().unwrap(),
-                    Value::parse_value(words[2])
+                    Value::parse_value(words[2]),
                 ));
-            },
-            "rcv" => { 
-                instructions.push(Instruction::RECEIVE(
-                    words[1].parse::<char>().unwrap()
-                ));
-            },
-            "jgz" => { 
+            }
+            "rcv" => {
+                instructions.push(Instruction::RECEIVE(words[1].parse::<char>().unwrap()));
+            }
+            "jgz" => {
                 instructions.push(Instruction::JUMP_GREATER_ZERO(
                     Value::parse_value(words[1]),
-                    Value::parse_value(words[2])
+                    Value::parse_value(words[2]),
                 ));
-            },
-            _ => panic!("Unknown Instruction: {}", words[0])
+            }
+            _ => panic!("Unknown Instruction: {}", words[0]),
         }
     }
 
@@ -133,7 +130,7 @@ impl State {
             send_channel: sc,
             recv_channel: rc,
             id: id,
-            num_sends: 0
+            num_sends: 0,
         };
         st.registers.insert('p', st.id as i64);
         st
@@ -155,8 +152,8 @@ impl State {
             return true;
         }
         let is_recv_inst = match self.instructions[self.instruction_ptr] {
-            Instruction::RECEIVE(_) => true ,
-            _ => false
+            Instruction::RECEIVE(_) => true,
+            _ => false,
         };
         return is_recv_inst && self.recv_channel.borrow().is_empty();
     }
@@ -169,40 +166,40 @@ impl State {
                 self.send_channel.borrow_mut().push_back(val);
                 self.num_sends += 1;
                 self.instruction_ptr += 1;
-            },
+            }
             Instruction::SET(reg, val) => {
                 let val = self.get_value(val);
                 self.registers.insert(reg, val);
                 self.instruction_ptr += 1;
-            },
+            }
             Instruction::ADD(reg, val) => {
                 let val = self.get_value(val);
                 let old_val = self.get_register_value(reg);
                 self.registers.insert(reg, old_val + val);
                 self.instruction_ptr += 1;
-            },
+            }
             Instruction::MUL(reg, val) => {
                 let val = self.get_value(val);
                 let old_val = self.get_register_value(reg);
                 self.registers.insert(reg, old_val * val);
                 self.instruction_ptr += 1;
-            },
+            }
             Instruction::MOD(reg, val) => {
                 let val = self.get_value(val);
                 let old_val = self.get_register_value(reg);
                 self.registers.insert(reg, old_val % val);
                 self.instruction_ptr += 1;
-            },
+            }
             Instruction::RECEIVE(reg) => {
                 let mut recv_queue = self.recv_channel.borrow_mut();
                 match recv_queue.pop_front() {
                     Some(v) => {
                         self.registers.insert(reg, v);
                         self.instruction_ptr += 1;
-                    },
-                    None => { }
+                    }
+                    None => {}
                 };
-            },
+            }
             Instruction::JUMP_GREATER_ZERO(reg, val) => {
                 let reg_val = self.get_value(reg);
                 if reg_val > 0 {
@@ -230,7 +227,6 @@ fn main() {
     let mut state2 = State::new(instructions.clone(), queue0.clone(), queue1.clone(), 1);
 
     loop {
-
         state1.exec_instruction();
         state2.exec_instruction();
 
