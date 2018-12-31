@@ -6,26 +6,34 @@ struct Bridge {
     port_b: u64,
 }
 
-fn get_strongest_bridge(bridges: &Vec<Bridge>, starting_num: u64) -> i64 {
+fn get_strongest_bridge(bridges: &Vec<Bridge>, starting_num: u64) -> (u64, i64) {
     let mut strongest = -1;
+    let mut longest = 0;
     for bridge in bridges {
         if bridge.port_a == starting_num || bridge.port_b == starting_num {
             let mut new_bridges = bridges.clone();
             remove_bridge(&mut new_bridges, &bridge);
             let other_port = get_other_port(&bridge, starting_num);
             let bridge_strength = starting_num + other_port;
-            let chain_strength = get_strongest_bridge(&new_bridges, other_port);
-            let possible_strongest = if chain_strength > -1 {
-                bridge_strength as i64 + chain_strength
+            let (longest_chain, chain_strength) = get_strongest_bridge(&new_bridges, other_port);
+
+            if chain_strength > -1 {
+                if 1 + longest_chain > longest
+                    || (1 + longest_chain == longest
+                        && chain_strength + bridge_strength as i64 > strongest)
+                {
+                    longest = 1 + longest_chain;
+                    strongest = bridge_strength as i64 + chain_strength;
+                }
             } else {
-                bridge_strength as i64
-            };
-            if possible_strongest > strongest {
-                strongest = possible_strongest;
+                if 1 > longest || (1 == longest && bridge_strength as i64 > strongest) {
+                    longest = 1;
+                    strongest = bridge_strength as i64;
+                }
             }
         }
     }
-    return strongest;
+    return (longest, strongest);
 }
 
 fn get_other_port(bridge: &Bridge, starting_num: u64) -> u64 {
@@ -38,7 +46,7 @@ fn get_other_port(bridge: &Bridge, starting_num: u64) -> u64 {
 
 fn main() {
     let bridges = read_bridges();
-    println!("strongest bridge: {}", get_strongest_bridge(&bridges, 0));
+    println!("strongest bridge: {}", get_strongest_bridge(&bridges, 0).1);
 }
 
 fn read_bridges() -> Vec<Bridge> {
